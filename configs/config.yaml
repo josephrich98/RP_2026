@@ -3,4 +3,6 @@ defaults:
   - trainer: default
   - dataset: toy
   - _self_
+
+seed: 42
 run_name: null

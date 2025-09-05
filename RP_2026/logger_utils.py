@@ -7,6 +7,9 @@ import subprocess
 import time
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
+import random
+import numpy as np
+import torch
 
 
 def setup_logger_and_tensorboard(run_name = None, log_dir = "logs", base_dir = "."):
@@ -42,6 +45,19 @@ def setup_logger_and_tensorboard(run_name = None, log_dir = "logs", base_dir = "
     logger.addHandler(file_handler)
 
     return logger, writer
+
+def set_seed(seed: int = 42):
+    if seed is None:
+        return
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    # Ensures deterministic algorithms (may be slower)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 
 def report_time_and_memory_of_script(script_path, argparse_flags=None, output_file=None, script_title=None):
     # Run the command and capture stderr, where `/usr/bin/time -l` outputs its results
