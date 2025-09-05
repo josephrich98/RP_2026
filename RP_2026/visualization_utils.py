@@ -1,10 +1,5 @@
 """RP_2026 visualization utilities."""
-import json
 import os
-from collections import Counter, defaultdict
-
-import scanpy as sc
-
 import re
 import matplotlib.pyplot as plt
 import math
@@ -12,11 +7,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from rich.console import Console
-from matplotlib.ticker import FuncFormatter, LogLocator, ScalarFormatter
-from scipy import stats
-from scipy.stats import t, ttest_rel
-from statsmodels.stats.contingency_tables import mcnemar
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
 console = Console()
 

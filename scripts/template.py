@@ -1,7 +1,7 @@
 import os
 import logging
 import pandas as pd
-import argparse
+# import argparse
 from RP_2026.constants import report_time_and_memory_of_script
 
 logger = logging.getLogger(__name__)
