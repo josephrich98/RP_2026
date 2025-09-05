@@ -1,0 +1,11 @@
+name: RP_2026
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+channel_priority: strict
+dependencies:
+  - python==3.10
+  - pip
+  - pip:
+      - .  # . installs pupl from pyproject.toml

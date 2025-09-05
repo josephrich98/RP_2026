@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "RP_2026"
+version = "0.1.0"
+description = "Github repository for the paper 'xxxxxxxxxxxxx'."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+authors = [
+    {name = "Joseph Rich", email = "josephrich98@gmail.com"}
+]
+maintainers = [
+    {name = "Joseph Rich", email = "josephrich98@gmail.com"}
+]
+requires-python = ">=3.10"
+keywords = ["AI", "bioinformatics", "deep learning", "medicine", "radiology"]
+classifiers = [
+    "Environment :: Console",
+    "Framework :: Jupyter",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "pupl[analysis]==0.1.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pachterlab/RP_2026"
+
+[tool.setuptools.packages.find]
+where = ["."]
