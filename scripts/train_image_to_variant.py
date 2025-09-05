@@ -33,7 +33,7 @@ def setup_logger_and_tensorboard(run_name = None):
         print(f"Warning: TensorBoard log directory {tensorboard_dir} already exists and may be overwritten.")
     writer = SummaryWriter(tensorboard_dir)
     os.makedirs(tensorboard_dir, exist_ok=True)
-    print(f"TensorBoard logs to {tensorboard_dir} - visualize with `tensorboard --logdir {os.path.dirname(tensorboard_dir)}`")
+    print(f"TensorBoard logs to {tensorboard_dir} - visualize with `tensorboard --logdir {tensorboard_dir}`")
 
     logger = logging.getLogger(__name__)
     logger.propagate = False
@@ -72,21 +72,36 @@ def main(cfg: DictConfig):
 
     # --- Build model from Hydra config ---
     model = hydra.utils.instantiate(cfg.model)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=cfg.trainer.lr)
+    if model == "pupl":
+        from pupl import PairedUnpairedTrainer  # local import to only if needed
 
-    # --- Training loop ---
-    for epoch in range(cfg.trainer.epochs):
-        total_loss = 0
-        for xb, yb in loader:
-            optimizer.zero_grad()
-            preds = model(xb)
-            loss = criterion(preds, yb)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        writer.add_scalar("Loss/train", total_loss, epoch+1)
-        logger.info(f"Epoch {epoch+1}/{cfg.trainer.epochs}, Loss: {total_loss:.4f}")
+         # --- Build trainer from Hydra config ---
+        trainer = PairedUnpairedTrainer(
+            epochs=cfg.trainer.epochs,
+            lr=cfg.trainer.lr,
+            batch_size=cfg.trainer.batch_size,
+            logger=logger,
+            writer=writer,
+        )
+
+        # --- Run training ---
+        trainer.fit(model, loader)
+    else:
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=cfg.trainer.lr)
+
+        # --- Training loop ---
+        for epoch in range(cfg.trainer.epochs):
+            total_loss = 0
+            for xb, yb in loader:
+                optimizer.zero_grad()
+                preds = model(xb)
+                loss = criterion(preds, yb)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+            writer.add_scalar("Loss/train", total_loss, epoch+1)
+            logger.info(f"Epoch {epoch+1}/{cfg.trainer.epochs}, Loss: {total_loss:.4f}")
     
     end_time = datetime.now()
     logger.info(f"Run finished at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")

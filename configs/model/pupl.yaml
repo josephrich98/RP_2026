@@ -1,0 +1,4 @@
+_target_: pupl.trainer.PairedUnpairedTrainer
+epochs: 5
+lr: 0.01
+batch_size: 32
