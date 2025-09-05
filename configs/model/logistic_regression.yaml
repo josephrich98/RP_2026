@@ -1,3 +1,3 @@
-_target_: torch.nn.Linear
+_target_: RP_2026.models.LogisticRegression
 in_features: ${dataset.n_features}
 out_features: ${dataset.n_classes}
