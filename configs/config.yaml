@@ -1,0 +1,4 @@
+defaults:
+  - model: logistic_regression
+  - trainer: default
+  # dataset intentionally left out
