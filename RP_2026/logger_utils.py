@@ -5,6 +5,43 @@ import os
 import re
 import subprocess
 import time
+from datetime import datetime
+from torch.utils.tensorboard import SummaryWriter
+
+
+def setup_logger_and_tensorboard(run_name = None, log_dir = "logs", base_dir = "."):
+    start_time_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    
+    if run_name is None or run_name == "":
+        run_name = f"run_{start_time_string}"
+
+    log_file_path = os.path.join(log_dir, f"{run_name}.log")
+
+    if os.path.exists(log_file_path):
+        raise FileExistsError(f"Log file {log_file_path} already exists. Please choose a different run name.")
+    print(f"Logging to {log_file_path}")
+
+    tensorboard_dir = os.path.join(base_dir, "runs", run_name)
+    if os.path.exists(tensorboard_dir):
+        print(f"Warning: TensorBoard log directory {tensorboard_dir} already exists and may be overwritten.")
+    writer = SummaryWriter(tensorboard_dir)
+    os.makedirs(tensorboard_dir, exist_ok=True)
+    print(f"TensorBoard logs to {tensorboard_dir} - visualize with `tensorboard --logdir {tensorboard_dir}`")
+
+    logger = logging.getLogger(__name__)
+    logger.propagate = False
+    logger.setLevel("INFO")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", "%H:%M:%S")
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    file_handler = logging.FileHandler(log_file_path)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    return logger, writer
 
 def report_time_and_memory_of_script(script_path, argparse_flags=None, output_file=None, script_title=None):
     # Run the command and capture stderr, where `/usr/bin/time -l` outputs its results
