@@ -1,0 +1,4 @@
+_target_: RP_2026.models.MLP
+in_features: ${dataset.n_features}
+hidden: 128
+out_features: ${dataset.n_classes}

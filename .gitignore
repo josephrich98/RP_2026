@@ -154,6 +154,8 @@ trash/
 **/pytest_ground_truth/
 data
 data/
+runs
+runs/
 output
 output/
 outputs
