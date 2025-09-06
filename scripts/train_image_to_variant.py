@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 from torch.utils.tensorboard import SummaryWriter
 from RP_2026.logger_utils import setup_logger_and_tensorboard, set_seed
 from RP_2026.trainers.utils import cross_validate
+from RP_2026.data.toy import make_toy_dataset
 from pdb import set_trace as st  # noqa: F401
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -35,24 +36,14 @@ def main(cfg: DictConfig):
     set_seed(seed)
     logger.info(f"Using seed: {seed}")
 
-    # --- Dummy dataset (replace later with real loader) ---
-    X = torch.randn(1000, cfg.dataset.n_features)
-    y = torch.randint(0, cfg.dataset.n_classes, (1000,))
-    full_dataset = TensorDataset(X, y)
-    
-    # Define sizes
-    n_total = len(full_dataset)
-    n_train = int(0.7 * n_total)
-    n_val = int(0.15 * n_total)
-    n_test = n_total - n_train - n_val
+    if "_target_" in cfg.dataset:
+        train_dataset, val_dataset, test_dataset = hydra.utils.instantiate(cfg.dataset, seed=cfg.seed)
+    # else:
+    #     # Assume pre-split datasets exist on disk
+    #     train_dataset = load_dataset(cfg.dataset.train_path)
+    #     val_dataset = load_dataset(cfg.dataset.val_path)
+    #     test_dataset = load_dataset(cfg.dataset.test_path)
 
-    train_dataset, val_dataset, test_dataset = random_split(
-        full_dataset, [n_train, n_val, n_test],
-        generator=torch.Generator().manual_seed(cfg.seed)  # reproducible split
-    )
-
-    # Placeholder for inference (could be unlabeled data)
-    new_dataset = TensorDataset(X[:100], y[:100])  # example subset
 
     # --- Build model and trainer from Hydra configs ---
     model = hydra.utils.instantiate(cfg.model)
@@ -66,7 +57,7 @@ def main(cfg: DictConfig):
     if cfg.mode == "train":
         if val_dataset is None:
             logger.warning("No validation dataset provided. Training without validation.")
-        if cfg.get("crossval", False) and val_dataset is not None:
+        if not cfg.get("crossval", True) and val_dataset is not None:
             logger.warning("crossval is False. Will not perform cross-validation.")
             val_dataset = None
         trainer.fit(model, train_dataset, val_dataset)
@@ -74,7 +65,7 @@ def main(cfg: DictConfig):
         test_score = trainer.evaluate(model, test_dataset)
         logger.info(f"Test score: {test_score:.4f}")
     elif cfg.mode == "infer":
-        preds = trainer.predict(model, new_dataset)
+        preds = trainer.predict(model, test_dataset)
         logger.info(f"Inference done: {len(preds)} samples predicted")
     else:
         raise ValueError(f"Unknown mode: {cfg.mode}. Valid options are: {valid_modes}")
