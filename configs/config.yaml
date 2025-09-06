@@ -5,4 +5,7 @@ defaults:
   - _self_
 
 seed: 42
+crossval: true
+mode: train  # options: train, test, infer
+tensorboard: true
 run_name: null

@@ -1,4 +1,4 @@
-_target_: RP_2026.trainers.mlp.SupervisedTrainer
+_target_: RP_2026.trainers.log_and_mlp.SupervisedTrainer
 epochs: 5
 lr: 0.01
 batch_size: 32

@@ -7,9 +7,10 @@ import hydra
 from omegaconf import DictConfig
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, random_split
 from torch.utils.tensorboard import SummaryWriter
 from RP_2026.logger_utils import setup_logger_and_tensorboard, set_seed
+from RP_2026.trainers.utils import cross_validate
 from pdb import set_trace as st  # noqa: F401
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +21,7 @@ os.makedirs(log_dir, exist_ok=True)
 @hydra.main(config_path="../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig):
     run_name = cfg.get("run_name", None)
-    logger, writer = setup_logger_and_tensorboard(run_name=run_name, log_dir=log_dir, base_dir=base_dir)
+    logger, writer = setup_logger_and_tensorboard(run_name=run_name, log_dir=log_dir, base_dir=base_dir, tensorboard=cfg.get("tensorboard", True))
 
     cmd = " ".join(sys.argv)
     logger.info(f"Command: {cmd}")
@@ -37,14 +38,46 @@ def main(cfg: DictConfig):
     # --- Dummy dataset (replace later with real loader) ---
     X = torch.randn(1000, cfg.dataset.n_features)
     y = torch.randint(0, cfg.dataset.n_classes, (1000,))
-    dataset = TensorDataset(X, y)
+    full_dataset = TensorDataset(X, y)
+    
+    # Define sizes
+    n_total = len(full_dataset)
+    n_train = int(0.7 * n_total)
+    n_val = int(0.15 * n_total)
+    n_test = n_total - n_train - n_val
+
+    train_dataset, val_dataset, test_dataset = random_split(
+        full_dataset, [n_train, n_val, n_test],
+        generator=torch.Generator().manual_seed(cfg.seed)  # reproducible split
+    )
+
+    # Placeholder for inference (could be unlabeled data)
+    new_dataset = TensorDataset(X[:100], y[:100])  # example subset
 
     # --- Build model and trainer from Hydra configs ---
     model = hydra.utils.instantiate(cfg.model)
     trainer = hydra.utils.instantiate(cfg.trainer, logger=logger, writer=writer)
 
     # --- Run training ---
-    trainer.fit(model, dataset)
+    # trainer.fit(model, dataset)
+    valid_modes = {"train", "test", "infer"}
+    
+    logger.info(f"Mode = {cfg.mode}")
+    if cfg.mode == "train":
+        if val_dataset is None:
+            logger.warning("No validation dataset provided. Training without validation.")
+        if cfg.get("crossval", False) and val_dataset is not None:
+            logger.warning("crossval is False. Will not perform cross-validation.")
+            val_dataset = None
+        trainer.fit(model, train_dataset, val_dataset)
+    elif cfg.mode == "test":
+        test_score = trainer.evaluate(model, test_dataset)
+        logger.info(f"Test score: {test_score:.4f}")
+    elif cfg.mode == "infer":
+        preds = trainer.predict(model, new_dataset)
+        logger.info(f"Inference done: {len(preds)} samples predicted")
+    else:
+        raise ValueError(f"Unknown mode: {cfg.mode}. Valid options are: {valid_modes}")
 
     end_time = datetime.now()
     logger.info(f"Run finished at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
